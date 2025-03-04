@@ -5,6 +5,7 @@ import OceanPathFinder from './pages/OceanPathFinder'; // Assuming this is your 
 import About from './pages/About';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
+import ShipForm from './pages/ShipForm';  // Add this import
 
 // Create a context to share route data between components
 export const RouteContext = createContext();
@@ -30,10 +31,12 @@ const App = () => {
               <Route path="/pathfinder" element={<OceanPathFinder />} />
               <Route path="/about" element={<About />} />
               <Route path="/" element={<OceanPathFinder />} />
+              <Route path="/ship/new" element={<ShipForm />} />  {/* Add this route */}
             </Routes>
           </main>
           <Footer />
         </div>
+
       </Router>
     </RouteContext.Provider>
   );
