@@ -5,7 +5,9 @@ import OceanPathFinder from './pages/OceanPathFinder'; // Assuming this is your 
 import About from './pages/About';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
+import {Toaster} from "react-hot-toast"
 import ShipForm from './pages/ShipForm';  // Add this import
+
 
 // Create a context to share route data between components
 export const RouteContext = createContext();
@@ -25,7 +27,7 @@ const App = () => {
       <Router>
         <div className="flex flex-col min-h-screen">
           <Navigation />
-          <main className="flex-grow">
+          <main className="flex-grow  p-4">
             <Routes>
               <Route path="/visualization" element={<RouteVisualization />} />
               <Route path="/pathfinder" element={<OceanPathFinder />} />
@@ -38,6 +40,7 @@ const App = () => {
         </div>
 
       </Router>
+      <Toaster/>
     </RouteContext.Provider>
   );
 };
