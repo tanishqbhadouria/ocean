@@ -49,7 +49,7 @@ app.use(morgan('dev'));
 
 // app.use("/api/v1/links", linkRouter);
 
-// const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3001;
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
