@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 
 app.use(cors(
   {
-    origin: "http://localhost:3000", // Replace with your frontend URL
+    origin: "*", // Replace with your frontend URL
     credentials: true, // Allow credentials (cookies)
   }
 ));
@@ -30,8 +30,6 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-<<<<<<< HEAD
-=======
 // routes decalaration   here mounting the specific routers to the app , this each router's will use Router.use('path',(rq,res));
 // app.use("/api/v1/auth", authRouter);
 
@@ -48,8 +46,7 @@ app.get("/", (req, res) => {
 
 // app.use("/api/v1/links", linkRouter);
 
-const port = process.env.PORT || 3001;
->>>>>>> 21757baed5898ecd12e67a56ca91a17b2720ba01
+// const port = process.env.PORT || 3001;
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
