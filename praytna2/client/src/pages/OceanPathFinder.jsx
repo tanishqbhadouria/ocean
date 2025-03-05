@@ -70,11 +70,11 @@ const OceanPathFinder = () => {
   
   // Common ports for quick selection - same as in RouteVisualization
   const commonPorts = [
-    { name: 'Mumbai to Dublin', source: [72.8777, 18.933], destination: [-6.2603, 53.3498] },
-    { name: 'Shanghai to Rotterdam', source: [121.4737, 31.2304], destination: [4.4777, 51.9244] },
-    { name: 'Tokyo to San Francisco', source: [139.8132, 35.7090], destination: [-122.4194, 37.7749] },
-    { name: 'New York to Los Angeles', source: [-74.0060, 40.7128], destination: [-118.2426, 34.0522] },
-    { name: 'Singapore to Sydney', source: [103.8198, 1.3521], destination: [151.2093, -33.8688] }
+    { name: 'Kakinada to Diglipur', source: [16.96, 82.21], destination: [5.39, 95.20] },
+    // { name: 'Shanghai to Rotterdam', source: [121.4737, 31.2304], destination: [4.4777, 51.9244] },
+    // { name: 'Tokyo to San Francisco', source: [139.8132, 35.7090], destination: [-122.4194, 37.7749] },
+    // { name: 'New York to Los Angeles', source: [-74.0060, 40.7128], destination: [-118.2426, 34.0522] },
+    // { name: 'Singapore to Sydney', source: [103.8198, 1.3521], destination: [151.2093, -33.8688] }
   ];
   
   // Handle quick route selection
@@ -189,7 +189,7 @@ const OceanPathFinder = () => {
                 </button>
                 
                 <div className="border-t pt-4 mt-4">
-                  <h4 className="font-medium text-sm mb-2">Quick Routes</h4>
+                  {/* <h4 className="font-medium text-sm mb-2">Quick Routes</h4> */}
                   <div className="space-y-2">
                     {commonPorts.map((port, index) => (
                       <button
