@@ -1,0 +1,36 @@
+{
+  "passages": [
+    {
+      "name": "Suez Canal",
+      "coordinates": [
+        [32.55, 29.966667],
+        [32.283333, 30.583333]
+      ],
+      "weight_multiplier": 0.8
+    },
+    {
+      "name": "Panama Canal",
+      "coordinates": [
+        [-79.9164, 9.3217],
+        [-79.5333, 8.9333]
+      ],
+      "weight_multiplier": 0.8
+    },
+    {
+      "name": "Strait of Malacca",
+      "coordinates": [
+        [98.8833, 3.1333],
+        [103.8500, 1.2667]
+      ],
+      "weight_multiplier": 0.9
+    },
+    {
+      "name": "Strait of Gibraltar",
+      "coordinates": [
+        [-5.6000, 35.9500],
+        [-5.2833, 36.1333]
+      ],
+      "weight_multiplier": 0.9
+    }
+  ]
+}
