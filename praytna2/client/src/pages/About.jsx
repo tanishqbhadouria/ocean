@@ -27,7 +27,7 @@ const About = () => {
         <div className="md:w-1/2 relative mt-8 md:mt-0 flex justify-center">
           <div className="relative">
             <img
-              src="https://sinay.ai/wp-content/uploads/2022/03/shipping-routes-scaled.jpg"
+              src="../../public/images/ship.jpg"
               alt="Maritime Routing"
               className="rounded-lg shadow-lg"
             />
