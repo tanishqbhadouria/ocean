@@ -108,33 +108,33 @@ const OceanPathFinder = () => {
   
   // Common ports for quick selection - ensure [longitude, latitude] format
   const commonPorts = [
-    { 
-      name: 'Singapore to Sydney', 
-      source: [103.8198, 1.3521],  // [longitude, latitude]
-      destination: [151.2093, -33.8688]
-    },
-    { 
-      name: 'Shanghai to Rotterdam', 
-      source: [121.4737, 31.2304],
-      destination: [4.4777, 51.9244]
-    },
-    { 
-      name: 'Tokyo to San Francisco', 
-      source: [139.8132, 35.7090],
-      destination: [-122.4194, 37.7749],
-      maxDistance: 1000  // Pacific routes need larger radius
-    },
-    { 
-      name: 'New York to Los Angeles', 
-      source: [-74.0060, 40.7128],
-      destination: [-118.2426, 34.0522],
-      maxDistance: 800
-    },
-    { 
-      name: 'Mumbai to Dublin', 
-      source: [72.8777, 18.933],  // [lon, lat]
-      destination: [-6.2603, 53.3498]
-    }
+    // { 
+    //   name: 'Singapore to Sydney', 
+    //   source: [103.8198, 1.3521],  // [longitude, latitude]
+    //   destination: [151.2093, -33.8688]
+    // },
+    // { 
+    //   name: 'Shanghai to Rotterdam', 
+    //   source: [121.4737, 31.2304],
+    //   destination: [4.4777, 51.9244]
+    // },
+    // { 
+    //   name: 'Tokyo to San Francisco', 
+    //   source: [139.8132, 35.7090],
+    //   destination: [-122.4194, 37.7749],
+    //   maxDistance: 1000  // Pacific routes need larger radius
+    // },
+    // { 
+    //   name: 'New York to Los Angeles', 
+    //   source: [-74.0060, 40.7128],
+    //   destination: [-118.2426, 34.0522],
+    //   maxDistance: 800
+    // },
+    // { 
+    //   name: 'Mumbai to Dublin', 
+    //   source: [72.8777, 18.933],  // [lon, lat]
+    //   destination: [-6.2603, 53.3498]
+    // }
   ];
   
   // Handle quick route selection
