@@ -9,7 +9,11 @@ const app = express();
 
 app.use(cors(
   {
+<<<<<<< HEAD
     origin: "http://localhost:5173", // Replace with your frontend URL
+=======
+    origin: "*", // Replace with your frontend URL
+>>>>>>> 2322df7beae04d1942b2d503b5e061afc3c452d4
     credentials: true, // Allow credentials (cookies)
   }
 ));
@@ -29,8 +33,28 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
+<<<<<<< HEAD
 
 const port = process.env.PORT || 3001;
+=======
+// routes decalaration   here mounting the specific routers to the app , this each router's will use Router.use('path',(rq,res));
+// app.use("/api/v1/auth", authRouter);
+
+// app.use("/api/v1/posts", postsRouter);
+
+
+// app.use("/api/v1/comment", commentRouter);
+
+// app.use("/api/v1/conversation", conversationRouter);
+
+// app.use("/api/v1/message", messageRouter);
+
+// app.use("/api/v1/post-interaction", postInteractionRouter);
+
+// app.use("/api/v1/links", linkRouter);
+
+// const port = process.env.PORT || 3001;
+>>>>>>> 2322df7beae04d1942b2d503b5e061afc3c452d4
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
