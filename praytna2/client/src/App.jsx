@@ -9,6 +9,7 @@ import {Toaster} from "react-hot-toast"
 import ShipForm from './pages/ShipForm';  // Add this import
 import ShipLogin from './pages/ShipLogin';
 import useAuthStore from './store/useAuthStore';
+import Dashboard from './pages/Dashboard';
 
 
 // Create a context to share route data between components
@@ -41,7 +42,8 @@ const App = () => {
             <Routes>
               <Route path="/visualization" element={ship?<RouteVisualization />:<Navigate to="/ship/new"/>} />
               <Route path="/pathfinder" element={ship?<OceanPathFinder />: <Navigate to="/ship/new"/>} />
-              <Route path="/about" element={ship?<About />: <Navigate to="/ship/new"/>} />
+              <Route path="/dashboard" element={ship?<Dashboard />: <Navigate to="/ship/new"/>} />
+              <Route path="/about" element={<About />} />
               <Route path="/" element={ship ? <OceanPathFinder /> : <Navigate to="/ship/new" />} />
               <Route path="/ship/new" element={!ship?<ShipForm />: <Navigate to="/"/>} />
               <Route path="/ship/login" element={!ship?<ShipLogin />: <Navigate to="/"/>} />
