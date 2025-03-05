@@ -2,119 +2,76 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RouteContext } from '../App';
 import OceanPathMap from '../components/Map/OceanPathMap';
-import PortSearch from '../components/PortSearch';
 
 const OceanPathFinder = () => {
   const navigate = useNavigate();
   const { globalRoute, setGlobalRoute } = useContext(RouteContext);
   
-  // Initialize local state from global state
-  const [sourceInput, setSourceInput] = useState(globalRoute.sourceInput);
-  const [destInput, setDestInput] = useState(globalRoute.destInput);
-  const [routeType, setRouteType] = useState(globalRoute.routeType);
-  const[ports, setPorts] = useState([]);
-  
-  // Set up local route object for calculations
-  const [route, setRoute] = useState({
-    source: globalRoute.source,
-    destination: globalRoute.destination
-  });
+  // State for coordinate inputs
+  const [sourceCoords, setSourceCoords] = useState({ lng: '', lat: '' });
+  const [destCoords, setDestCoords] = useState({ lng: '', lat: '' });
+  const [routeData, setRouteData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    // Fetch shipping lanes
-    fetch("/ports.geojson")
-      .then((response) => {
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        return response.json();
-      })
-      .then((data) => setPorts(data))
-      .catch((error) => {
-        console.error("Error loading shipping lanes:", error);
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    // Validate coordinates
+    const sourceLng = parseFloat(sourceCoords.lng);
+    const sourceLat = parseFloat(sourceCoords.lat);
+    const destLng = parseFloat(destCoords.lng);
+    const destLat = parseFloat(destCoords.lat);
+
+    if (isNaN(sourceLng) || isNaN(sourceLat) || isNaN(destLng) || isNaN(destLat)) {
+      setError('Please enter valid coordinates');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/find-route', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          source: {
+            lng: sourceLng,
+            lat: sourceLat
+          },
+          destination: {
+            lng: destLng,
+            lat: destLat
+          }
+        })
       });
 
-     }, []);
-  
-  // Update source/dest inputs when global route changes
-  useEffect(() => {
-    setSourceInput(globalRoute.sourceInput);
-    setDestInput(globalRoute.destInput);
-    setRoute({
-      source: globalRoute.source,
-      destination: globalRoute.destination
-    });
-    setRouteType(globalRoute.routeType);
-  }, [globalRoute]);
-  
-  // Handle coordinate input
-  const handleCoordinateInput = () => {
-    try {
-      const sourceCoords = sourceInput.split(',').map(num => parseFloat(num.trim()));
-      const destCoords = destInput.split(',').map(num => parseFloat(num.trim()));
+      const data = await response.json();
       
-      if (sourceCoords.length !== 2 || destCoords.length !== 2 ||
-          isNaN(sourceCoords[0]) || isNaN(sourceCoords[1]) ||
-          isNaN(destCoords[0]) || isNaN(destCoords[1])) {
-        alert('Please enter valid coordinates as "longitude, latitude"');
-        return;
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch route');
       }
-      
-      const newRoute = {
-        source: sourceCoords,
-        destination: destCoords
-      };
-      
-      setRoute(newRoute);
+
+      setRouteData(data);
       
       // Update global state
       setGlobalRoute({
-        ...globalRoute,
-        source: sourceCoords,
-        destination: destCoords,
-        sourceInput: sourceInput,
-        destInput: destInput,
-        routeType: routeType
+        source: [sourceLng, sourceLat],
+        destination: [destLng, destLat],
+        routeData: data
       });
-    } catch (error) {
-      alert('Invalid coordinates. Please use format: longitude, latitude');
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
-   console.log(ports);
-  // Navigate to visualization view
-  const goToVisualization = () => {
-    navigate('/visualization');
-  };
-  
-  // Common ports for quick selection - same as in RouteVisualization
-  const commonPorts = [
-    { name: 'Mumbai to Dublin', source: [72.8777, 18.933], destination: [-6.2603, 53.3498] },
-    { name: 'Shanghai to Rotterdam', source: [121.4737, 31.2304], destination: [4.4777, 51.9244] },
-    { name: 'Tokyo to San Francisco', source: [139.8132, 35.7090], destination: [-122.4194, 37.7749] },
-    { name: 'New York to Los Angeles', source: [-74.0060, 40.7128], destination: [-118.2426, 34.0522] },
-    { name: 'Singapore to Sydney', source: [103.8198, 1.3521], destination: [151.2093, -33.8688] }
-  ];
-  
-  // Handle quick route selection
-  const selectQuickRoute = (selectedRoute) => {
-    const newSourceInput = `${selectedRoute.source[0]}, ${selectedRoute.source[1]}`;
-    const newDestInput = `${selectedRoute.destination[0]}, ${selectedRoute.destination[1]}`;
-    
-    setSourceInput(newSourceInput);
-    setDestInput(newDestInput);
-    setRoute({
-      source: selectedRoute.source,
-      destination: selectedRoute.destination
-    });
-    
-    // Update global state
-    setGlobalRoute({
-      ...globalRoute,
-      source: selectedRoute.source,
-      destination: selectedRoute.destination,
-      sourceInput: newSourceInput,
-      destInput: newDestInput
-    });
-  };
-  
+
   return (
     <div className="container mx-auto px-4 py-6">
       <h2 className="text-2xl font-bold mb-6">Ocean Path Finder</h2>
@@ -127,110 +84,85 @@ const OceanPathFinder = () => {
               <h3 className="text-lg font-medium">Route Configuration</h3>
             </div>
             <div className="p-4">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Source Port
-                  </label>
-                  <PortSearch
-                    ports={ports}
-                    onSelect={(coords) => {
-                      const coordString = `${coords[0]}, ${coords[1]}`;
-                      setSourceInput(coordString);
-                      setRoute(prev => ({ ...prev, source: coords }));
-                      setGlobalRoute(prev => ({
-                        ...prev,
-                        source: coords,
-                        sourceInput: coordString
-                      }));
-                    }}
-                    placeholder="Select source port..."
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Destination Port
-                  </label>
-                  <PortSearch
-                    ports={ports}
-                    onSelect={(coords) => {
-                      const coordString = `${coords[0]}, ${coords[1]}`;
-                      setDestInput(coordString);
-                      setRoute(prev => ({ ...prev, destination: coords }));
-                      setGlobalRoute(prev => ({
-                        ...prev,
-                        destination: coords,
-                        destInput: coordString
-                      }));
-                    }}
-                    placeholder="Select destination port..."
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Route Type
-                  </label>
-                  <div className="flex space-x-4">
-                    <div className="flex items-center">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Source Coordinates</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-gray-600">Longitude</label>
                       <input
-                        id="standard-radio"
-                        type="radio"
-                        name="route-type"
-                        checked={routeType === 'standard'}
-                        onChange={() => setRouteType('standard')}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                        type="number"
+                        step="any"
+                        value={sourceCoords.lng}
+                        onChange={(e) => setSourceCoords(prev => ({ ...prev, lng: e.target.value }))}
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        required
                       />
-                      <label htmlFor="standard-radio" className="ml-2 text-sm text-gray-700">
-                        Standard Route
-                      </label>
                     </div>
-                    <div className="flex items-center">
+                    <div>
+                      <label className="text-xs text-gray-600">Latitude</label>
                       <input
-                        id="weather-radio"
-                        type="radio"
-                        name="route-type"
-                        checked={routeType === 'weather'}
-                        onChange={() => setRouteType('weather')}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                        type="number"
+                        step="any"
+                        value={sourceCoords.lat}
+                        onChange={(e) => setSourceCoords(prev => ({ ...prev, lat: e.target.value }))}
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        required
                       />
-                      <label htmlFor="weather-radio" className="ml-2 text-sm text-gray-700">
-                        Weather-Optimized
-                      </label>
                     </div>
                   </div>
                 </div>
-                
+
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Destination Coordinates</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs text-gray-600">Longitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={destCoords.lng}
+                        onChange={(e) => setDestCoords(prev => ({ ...prev, lng: e.target.value }))}
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-600">Latitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={destCoords.lat}
+                        onChange={(e) => setDestCoords(prev => ({ ...prev, lat: e.target.value }))}
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <button
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  onClick={handleCoordinateInput}
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
                 >
-                  Calculate Route
+                  {isLoading ? 'Calculating...' : 'Calculate Route'}
                 </button>
-                
+
                 <button
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                  onClick={goToVisualization}
+                  type="button"
+                  onClick={() => navigate('/visualization')}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded"
                 >
                   View on Globe
                 </button>
-                
-                <div className="border-t pt-4 mt-4">
-                  <h4 className="font-medium text-sm mb-2">Quick Routes</h4>
-                  <div className="space-y-2">
-                    {commonPorts.map((port, index) => (
-                      <button
-                        key={index}
-                        className="w-full py-1 px-3 text-sm border border-gray-300 hover:bg-gray-50 rounded"
-                        onClick={() => selectQuickRoute(port)}
-                      >
-                        {port.name}
-                      </button>
-                    ))}
-                  </div>
+              </form>
+
+              {error && (
+                <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
+                  {error}
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -239,28 +171,10 @@ const OceanPathFinder = () => {
         <div className="md:col-span-3">
           <div className="bg-white rounded-lg shadow h-full">
             <div className="bg-gray-100 px-4 py-3 rounded-t-lg border-b">
-              <h3 className="text-lg font-medium">
-                Ocean Path Map
-                {route.source && route.destination && (
-                  <span className="text-gray-500 text-sm ml-2">
-                    ({route.source[0].toFixed(2)}, {route.source[1].toFixed(2)}) to 
-                    ({route.destination[0].toFixed(2)}, {route.destination[1].toFixed(2)})
-                  </span>
-                )}
-              </h3>
+              <h3 className="text-lg font-medium">Ocean Path Map</h3>
             </div>
             <div className="p-4" style={{ height: '600px' }}>
-              {!route.source || !route.destination ? (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  <p>Please select a route to calculate</p>
-                </div>
-              ) : (
-                <OceanPathMap 
-                  route={route}
-                  selectedRoute={routeType}
-                  onRouteTypeChange={setRouteType}
-                />
-              )}
+              <OceanPathMap routeData={routeData} />
             </div>
           </div>
         </div>
