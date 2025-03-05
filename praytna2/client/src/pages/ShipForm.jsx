@@ -228,7 +228,7 @@ const RegisterForm = () => {
             type="submit"
             className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition duration-300"
           >
-            Register
+            Register <span className="text-red-500">*</span>
           </button>
         </div>
       </form>
