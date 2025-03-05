@@ -41,7 +41,7 @@ const App = () => {
             <Routes>
               <Route path="/visualization" element={ship?<RouteVisualization />:<Navigate to="/ship/new"/>} />
               <Route path="/pathfinder" element={ship?<OceanPathFinder />: <Navigate to="/ship/new"/>} />
-              <Route path="/about" element={ship?<About />: <Navigate to="/ship/new"/>} />
+              <Route path="/about" element={<About />} />
               <Route path="/" element={ship ? <OceanPathFinder /> : <Navigate to="/ship/new" />} />
               <Route path="/ship/new" element={!ship?<ShipForm />: <Navigate to="/"/>} />
               <Route path="/ship/login" element={!ship?<ShipLogin />: <Navigate to="/"/>} />

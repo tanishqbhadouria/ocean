@@ -74,7 +74,7 @@ const RegisterForm = () => {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ship Name
+                Ship Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -88,7 +88,7 @@ const RegisterForm = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+                Password <span className="text-red-500">*</span>
               </label>
               <input
                 type="password"
@@ -102,7 +102,7 @@ const RegisterForm = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ship Type
+                Ship Type <span className="text-red-500">*</span>
               </label>
               <select
                 name="type"
@@ -127,7 +127,7 @@ const RegisterForm = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Capacity (tons)
+                Capacity (tons) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -145,7 +145,7 @@ const RegisterForm = () => {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Current Location
+                Current Location <span className="text-red-500">*</span>
               </label>
               <div className="flex space-x-4">
                 <div className="flex-1">
@@ -174,7 +174,7 @@ const RegisterForm = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Speed (knots)
+                Speed (knots) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -188,7 +188,7 @@ const RegisterForm = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
+                Status <span className="text-red-500">*</span>
               </label>
               <select
                 name="status"
@@ -207,7 +207,7 @@ const RegisterForm = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Fuel Level (%)
+                Fuel Level (%) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"

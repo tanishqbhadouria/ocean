@@ -44,7 +44,7 @@ const LoginForm = () => {
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Ship Name
+              Ship Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -58,7 +58,7 @@ const LoginForm = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
+              Password <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
@@ -74,7 +74,7 @@ const LoginForm = () => {
             type="submit"
             className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition duration-300"
           >
-            Login
+            Login 
           </button>
         </div>
       </form>
