@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RouteContext } from '../App';
 import OceanPathMap from '../components/Map/OceanPathMap';
+import PortSearch from '../components/PortSearch';
 
 const OceanPathFinder = () => {
   const navigate = useNavigate();
@@ -11,12 +12,27 @@ const OceanPathFinder = () => {
   const [sourceInput, setSourceInput] = useState(globalRoute.sourceInput);
   const [destInput, setDestInput] = useState(globalRoute.destInput);
   const [routeType, setRouteType] = useState(globalRoute.routeType);
+  const[ports, setPorts] = useState([]);
   
   // Set up local route object for calculations
   const [route, setRoute] = useState({
     source: globalRoute.source,
     destination: globalRoute.destination
   });
+
+  useEffect(() => {
+    // Fetch shipping lanes
+    fetch("/ports.geojson")
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        return response.json();
+      })
+      .then((data) => setPorts(data))
+      .catch((error) => {
+        console.error("Error loading shipping lanes:", error);
+      });
+
+     }, []);
   
   // Update source/dest inputs when global route changes
   useEffect(() => {
@@ -62,7 +78,7 @@ const OceanPathFinder = () => {
       alert('Invalid coordinates. Please use format: longitude, latitude');
     }
   };
-  
+   console.log(ports);
   // Navigate to visualization view
   const goToVisualization = () => {
     navigate('/visualization');
@@ -113,30 +129,42 @@ const OceanPathFinder = () => {
             <div className="p-4">
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="source" className="block text-sm font-medium text-gray-700 mb-1">
-                    Source (longitude, latitude)
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Source Port
                   </label>
-                  <input
-                    type="text"
-                    id="source"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
-                    placeholder="e.g. 72.8777, 18.933"
-                    value={sourceInput}
-                    onChange={(e) => setSourceInput(e.target.value)}
+                  <PortSearch
+                    ports={ports}
+                    onSelect={(coords) => {
+                      const coordString = `${coords[0]}, ${coords[1]}`;
+                      setSourceInput(coordString);
+                      setRoute(prev => ({ ...prev, source: coords }));
+                      setGlobalRoute(prev => ({
+                        ...prev,
+                        source: coords,
+                        sourceInput: coordString
+                      }));
+                    }}
+                    placeholder="Select source port..."
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="destination" className="block text-sm font-medium text-gray-700 mb-1">
-                    Destination (longitude, latitude)
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Destination Port
                   </label>
-                  <input
-                    type="text"
-                    id="destination"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
-                    placeholder="e.g. -6.2603, 53.3498"
-                    value={destInput}
-                    onChange={(e) => setDestInput(e.target.value)}
+                  <PortSearch
+                    ports={ports}
+                    onSelect={(coords) => {
+                      const coordString = `${coords[0]}, ${coords[1]}`;
+                      setDestInput(coordString);
+                      setRoute(prev => ({ ...prev, destination: coords }));
+                      setGlobalRoute(prev => ({
+                        ...prev,
+                        destination: coords,
+                        destInput: coordString
+                      }));
+                    }}
+                    placeholder="Select destination port..."
                   />
                 </div>
                 
