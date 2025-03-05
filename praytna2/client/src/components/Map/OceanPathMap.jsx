@@ -80,7 +80,7 @@ const splitPathAtAntimeridian = (coordinates) => {
   return paths;
 };
 
-const OceanPathMap = ({ route, selectedRoute, onRouteTypeChange }) => {
+const OceanPathMap = ({ route = {}, selectedRoute = 'standard', onRouteTypeChange }) => {
   const [pathData, setPathData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -90,7 +90,11 @@ const OceanPathMap = ({ route, selectedRoute, onRouteTypeChange }) => {
   // Generate path points from the API
   useEffect(() => {
     const fetchPath = async () => {
-      if (!route.source || !route.destination) return;
+      // Add validation to prevent null access
+      if (!route || !route.source || !route.destination) {
+        console.log('Missing route data:', route);
+        return;
+      }
       
       setLoading(true);
       setError(null);
@@ -128,7 +132,7 @@ const OceanPathMap = ({ route, selectedRoute, onRouteTypeChange }) => {
     };
     
     fetchPath();
-  }, [route.source, route.destination, selectedRoute]);
+  }, [route?.source, route?.destination, selectedRoute]);
   
   // Format route stats for display
   const formatRouteStats = () => {
@@ -214,7 +218,7 @@ const OceanPathMap = ({ route, selectedRoute, onRouteTypeChange }) => {
         />
         
         {/* Source marker - convert [lon, lat] to [lat, lng] for Leaflet */}
-        {route.source && (
+        {route?.source && (
           <Marker position={[route.source[1], route.source[0]]}>
             <Popup>
               <b>Source:</b><br />
@@ -280,6 +284,13 @@ const OceanPathMap = ({ route, selectedRoute, onRouteTypeChange }) => {
       </div>
     </div>
   );
+};
+
+// Add PropTypes validation
+OceanPathMap.defaultProps = {
+  route: {},
+  selectedRoute: 'standard',
+  onRouteTypeChange: () => {} // Empty function as default
 };
 
 export default OceanPathMap;

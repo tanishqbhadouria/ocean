@@ -156,7 +156,7 @@ def load_graph():
     
     return None
 
-def find_nearest_node(graph, point, max_distance=5000):  # Increased from 2000 to 5000 km
+def find_nearest_node(graph, point, max_distance=5000):  # Already high enough at 5000km
     """Find the nearest node in the graph to a given point"""
     nearest_node = None
     min_distance = float('inf')
@@ -206,6 +206,51 @@ def find_nearest_node(graph, point, max_distance=5000):  # Increased from 2000 t
         return None, min_distance
     
     return nearest_node, min_distance
+
+def find_nearest_water_node(graph, point, max_distance=500):
+    """Find the nearest navigable water node to a given point"""
+    nearest_node = None
+    min_distance = float('inf')
+    candidates = []
+    
+    lon, lat = point
+    lon = ((lon + 180) % 360) - 180  # Normalize longitude
+    
+    for node, data in graph.nodes(data=True):
+        if 'coordinates' not in data:
+            continue
+            
+        # Skip non-water nodes if we have that information
+        if data.get('is_land', False):
+            continue
+            
+        node_lon, node_lat = data['coordinates']
+        node_lon = ((node_lon + 180) % 360) - 180
+        
+        try:
+            dist = haversine([lon, lat], [node_lon, node_lat])
+            
+            # Store all nodes within reasonable distance
+            if dist <= max_distance:
+                candidates.append((node, dist))
+            
+            if dist < min_distance:
+                min_distance = dist
+                nearest_node = node
+                
+        except ValueError as e:
+            print(f"Error calculating distance for node {node}: {e}")
+            continue
+    
+    # Sort candidates by distance
+    candidates.sort(key=lambda x: x[1])
+    
+    # Return None if no suitable node found
+    if not candidates:
+        return None, min_distance
+        
+    # Return the closest water node
+    return candidates[0]
 
 @app.route('/', methods=['GET'])
 def index():
@@ -262,23 +307,23 @@ def shortest_ocean_path():
         if g is None:
             return jsonify({"error": "Failed to load graph"}), 500
         
-        # Find nearest nodes with increased tolerance for certain regions
-        source_node, source_dist = find_nearest_node(g, source)
-        dest_node, dest_dist = find_nearest_node(g, destination)
+        # Find nearest water nodes instead of just nearest nodes
+        source_node, source_dist = find_nearest_water_node(g, source)
+        dest_node, dest_dist = find_nearest_water_node(g, destination)
         
         # Log the found nodes and distances
-        print(f"Source: {source} -> Node: {source_node}, Distance: {source_dist:.2f} km")
-        print(f"Destination: {destination} -> Node: {dest_node}, Distance: {dest_dist:.2f} km")
+        print(f"Source: {source} -> Water Node: {source_node}, Distance: {source_dist:.2f} km")
+        print(f"Destination: {destination} -> Water Node: {dest_node}, Distance: {dest_dist:.2f} km")
         
         if source_node is None:
             return jsonify({
-                "error": f"No suitable node found near source point. Closest is {source_dist:.2f} km away.",
+                "error": f"No suitable water node found near source point. Closest is {source_dist:.2f} km away.",
                 "coordinates": source
             }), 400
         
         if dest_node is None:
             return jsonify({
-                "error": f"No suitable node found near destination point. Closest is {dest_dist:.2f} km away.",
+                "error": f"No suitable water node found near destination point. Closest is {dest_dist:.2f} km away.",
                 "coordinates": destination
             }), 400
         

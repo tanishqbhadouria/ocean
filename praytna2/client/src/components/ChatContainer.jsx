@@ -19,7 +19,7 @@ const ChatContainer = () => {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-gray-100">
+        <div className="flex flex-col h-screen">
             <header className="text-center py-4 text-2xl font-bold text-gray-700">
                 Chat with AI
             </header>

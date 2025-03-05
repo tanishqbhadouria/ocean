@@ -1,71 +1,53 @@
-import React, { useMemo, useCallback } from 'react';
-import Select from 'react-select/async';
-import debounce from 'lodash/debounce';
+import React, { useState } from 'react';
 
 const PortSearch = ({ ports, onSelect, placeholder }) => {
-    // Transform ports data once and memoize it
-    const portOptions = useMemo(() => 
-        ports.features?.map(port => ({
-            value: port.geometry.coordinates,
-            label: port.properties.PORT_NAME,
-            searchStr: `${port.properties.PORT_NAME} ${port.properties.COUNTRY || ''} ${port.geometry.coordinates.join(' ')}`.toLowerCase()
-        })) || [], 
-        [ports]
-    );
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
 
-    // Debounced search function
-    const loadOptions = useCallback(
-        debounce((inputValue, callback) => {
-            const filtered = portOptions.filter(option => 
-                option.searchStr.includes(inputValue.toLowerCase())
-            ).slice(0, 100); // Limit results to prevent lag
-            
-            callback(filtered);
-        }, 300),
-        [portOptions]
-    );
+  const filteredPorts = ports.filter(port => 
+    port.properties.PORT_NAME.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    port.properties.COUNTRY.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    const customStyles = {
-        control: (base) => ({
-            ...base,
-            minHeight: '42px',
-            borderRadius: '0.375rem'
-        }),
-        option: (base) => ({
-            ...base,
-            padding: '8px 12px',
-            cursor: 'pointer'
-        }),
-        menuList: (base) => ({
-            ...base,
-            maxHeight: '200px'
-        })
-    };
+  const handleSelect = (port) => {
+    onSelect(port);
+    setSearchTerm(`${port.properties.PORT_NAME}, ${port.properties.COUNTRY}`);
+    setShowDropdown(false);
+  };
 
-    const formatOptionLabel = useCallback(({ label, value }) => (
-        <div>
-            <div className="font-medium">{label}</div>
-            <div className="text-sm text-gray-500">
-                {value[0].toFixed(4)}, {value[1].toFixed(4)}
-            </div>
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
+        placeholder={placeholder}
+        value={searchTerm}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          setShowDropdown(true);
+        }}
+        onFocus={() => setShowDropdown(true)}
+      />
+      
+      {showDropdown && searchTerm && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+          {filteredPorts.length > 0 ? (
+            filteredPorts.map((port, index) => (
+              <div
+                key={index}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                onClick={() => handleSelect(port)}
+              >
+                {port.properties.PORT_NAME}, {port.properties.COUNTRY}
+              </div>
+            ))
+          ) : (
+            <div className="px-4 py-2 text-gray-500">No ports found</div>
+          )}
         </div>
-    ), []);
-
-    return (
-        <Select
-            async
-            loadOptions={loadOptions}
-            onChange={(option) => onSelect(option?.value)}
-            placeholder={placeholder}
-            styles={customStyles}
-            formatOptionLabel={formatOptionLabel}
-            className="w-full"
-            isClearable
-            cacheOptions
-            defaultOptions
-            filterOption={null} // Disable client-side filtering
-        />
-    );
+      )}
+    </div>
+  );
 };
 
-export default React.memo(PortSearch);
+export default PortSearch;

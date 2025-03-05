@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import useAuthStore from "../store/useAuthStore";
 import { useNavigate } from "react-router-dom";
 
@@ -14,8 +14,28 @@ const RegisterForm = () => {
     fuelLevel: "100",
   });
   const navigate = useNavigate();
-
   const { signup } = useAuthStore();
+
+  // Automatically set current location using Geolocation API
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setFormData((prevData) => ({
+            ...prevData,
+            currentLocation: {
+              lon: position.coords.longitude.toFixed(6), // Rounding to 6 decimal places
+              lat: position.coords.latitude.toFixed(6),
+            },
+          }));
+        },
+        (error) => console.error("Error fetching location:", error),
+        { enableHighAccuracy: true } // Higher accuracy for better location results
+      );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -205,20 +225,6 @@ const RegisterForm = () => {
                 )}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Fuel Level (%) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="fuelLevel"
-                placeholder="Enter fuel level"
-                value={formData.fuelLevel}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
           </div>
         </div>
 
@@ -228,7 +234,7 @@ const RegisterForm = () => {
             type="submit"
             className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition duration-300"
           >
-            Register <span className="text-red-500">*</span>
+            Register
           </button>
         </div>
       </form>
