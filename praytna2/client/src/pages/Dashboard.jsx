@@ -12,6 +12,8 @@ const Dashboard = ( {ship} ) => {
     );
   }
 
+  const pos = [ship?.currentLocation[1], ship?.currentLocation[0]];
+
   return (
     <div className="min-h-screen bg-white p-6 w-11/12 mx-auto">
       {/* Page Header */}
@@ -82,9 +84,9 @@ const Dashboard = ( {ship} ) => {
         <div className="w-full md:w-3/5">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">🗺 Current Location</h2>
           <div className="h-[500px] w-full border border-gray-300 shadow-md rounded-lg overflow-hidden">
-            <MapContainer center={ship.currentLocation} zoom={4} className="h-full w-full">
+            <MapContainer center={pos} zoom={4} className="h-full w-full">
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              <Marker position={ship.currentLocation}>
+              <Marker position={pos}>
                 <Popup>{ship.name} is currently here.</Popup>
               </Marker>
             </MapContainer>
