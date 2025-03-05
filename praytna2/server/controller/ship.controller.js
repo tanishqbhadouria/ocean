@@ -120,3 +120,28 @@ export const loginShip = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+export const ship = async (req, res) => {
+  try {
+    res.send({
+      success: true,
+      ship: req.ship,
+    });
+  } catch (error) {
+    console.log("Error in sendMe controller:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+export const logoutShip = async (req, res) => {
+  try {
+    res.clearCookie("jwt");
+    res.send({
+      success: true,
+      message: "Logout successful",
+    });
+  } catch (error) {
+    console.log("Error in logout controller:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+}

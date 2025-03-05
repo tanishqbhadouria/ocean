@@ -6,11 +6,10 @@ import cors from "cors";
 import connectDB from "./libs/connectDB.js";
 
 const app = express();
-const port = process.env.PORT || 5000;
 
 app.use(cors(
   {
-    origin: "http://localhost:3000", // Replace with your frontend URL
+    origin: "http://localhost:5173", // Replace with your frontend URL
     credentials: true, // Allow credentials (cookies)
   }
 ));
@@ -30,26 +29,8 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-<<<<<<< HEAD
-=======
-// routes decalaration   here mounting the specific routers to the app , this each router's will use Router.use('path',(rq,res));
-// app.use("/api/v1/auth", authRouter);
-
-// app.use("/api/v1/posts", postsRouter);
-
-
-// app.use("/api/v1/comment", commentRouter);
-
-// app.use("/api/v1/conversation", conversationRouter);
-
-// app.use("/api/v1/message", messageRouter);
-
-// app.use("/api/v1/post-interaction", postInteractionRouter);
-
-// app.use("/api/v1/links", linkRouter);
 
 const port = process.env.PORT || 3001;
->>>>>>> 21757baed5898ecd12e67a56ca91a17b2720ba01
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
