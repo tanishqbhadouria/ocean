@@ -126,11 +126,11 @@ export default function OceanPathFinder() {
             </div>
 
             <div className="flex-1">
-                <OceanPathMap
+                {/* <OceanPathMap
                     source={source}
                     destination={destination}
                     route={route}
-                />
+                /> */}
             </div>
         </div>
     );

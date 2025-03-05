@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-import React, { useState } from "react";
-import axios from "axios";
-=======
 import React from "react";
->>>>>>> a810e59e9ee83636824adc22d1ecf5175ab2720b
 
 const About = () => {
   const [input, setInput] = useState("");
@@ -26,18 +21,6 @@ const About = () => {
   };
 
   return (
-<<<<<<< HEAD
-    <div>
-      <h2>About Solo AI</h2>
-      <input 
-        type="text" 
-        placeholder="Ask something..." 
-        value={input} 
-        onChange={(e) => setInput(e.target.value)}
-      />
-      <button onClick={handleGenerate}>Generate</button>
-      {response && <p><strong>Response:</strong> {response}</p>}
-=======
     <div className="relative bg-white">
       {/* Hero Section */}
       <div className="container mx-auto px-6 py-12 md:flex md:items-center">
@@ -159,7 +142,6 @@ const About = () => {
           </div>
         </div>
       </div>
->>>>>>> a810e59e9ee83636824adc22d1ecf5175ab2720b
     </div>
   );
 };
