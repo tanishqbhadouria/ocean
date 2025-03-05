@@ -26,7 +26,7 @@ const useAuthStore = create((set) => ({
       return true;
     } catch (error) {
       console.error("Signup failed:", error);
-      toast.error("Signup failed. Please try again.");
+      toast.error(error.response.data.message || "Signup failed. Please try again.");
       set({ ship: null });
       return false;
     }
@@ -40,7 +40,7 @@ const useAuthStore = create((set) => ({
       return true;
     } catch (error) {
       console.error("Login failed:", error);
-      toast.error("Login failed. Please try again.");
+      toast.error(error.response.data.message || "Login failed. Please try again.");
       set({ ship: null });
       return false;
     }

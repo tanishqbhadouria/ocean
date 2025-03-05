@@ -21,9 +21,11 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 
 import authRoutes from "./routes/shipAuth.route.js"
+import chatRoutes from "./routes/chat.route.js"
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/chat", chatRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");

@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import useAuthStore from "../store/useAuthStore";
 
 const Dashboard = ( {ship} ) => {
-  
 
   if (!ship) {
     return (
@@ -36,7 +34,7 @@ const Dashboard = ( {ship} ) => {
                 <span className="font-medium">Type:</span> <span>{ship.type}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Capacity:</span> <span>{ship.capacity.toLocaleString()} tons</span>
+                <span className="font-medium">Capacity:</span> <span>{ship?.capacity?.toLocaleString()} tons</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="font-medium">Status:</span>
