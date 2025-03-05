@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import GlobeView from '../components/GlobeView';
-import OceanPathMap from '../components/Map/OceanPathMap'; 
+import GlobeView from '../components/GlobeView.jsx';
+import OceanPathMap from '../components/Map/OceanPathMap.jsx'; 
 import { useNavigate } from 'react-router-dom';
 import { RouteContext } from '../App';
 

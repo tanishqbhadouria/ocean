@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RouteContext } from '../App';
-import OceanPathMap from '../components/Map/OceanPathMap';
+import OceanPathMap from '../components/Map/OceanPathMap.jsx';
+import PathDebugger from '../components/Map/PathDebugger.jsx';
+import { toast } from 'react-hot-toast';
 
 const OceanPathFinder = () => {
   const navigate = useNavigate();
   const { globalRoute, setGlobalRoute } = useContext(RouteContext);
+  const [isLoading, setIsLoading] = useState(false);
+  const [pathData, setPathData] = useState(null);
+  const [showDebugger, setShowDebugger] = useState(false);
+  const API_URL = 'http://localhost:5000';
   
   // Initialize local state from global state
   const [sourceInput, setSourceInput] = useState(globalRoute.sourceInput);
@@ -30,15 +36,16 @@ const OceanPathFinder = () => {
   }, [globalRoute]);
   
   // Handle coordinate input
-  const handleCoordinateInput = () => {
+  const handleCoordinateInput = async () => {
     try {
+      // Parse as [longitude, latitude]
       const sourceCoords = sourceInput.split(',').map(num => parseFloat(num.trim()));
       const destCoords = destInput.split(',').map(num => parseFloat(num.trim()));
       
       if (sourceCoords.length !== 2 || destCoords.length !== 2 ||
           isNaN(sourceCoords[0]) || isNaN(sourceCoords[1]) ||
           isNaN(destCoords[0]) || isNaN(destCoords[1])) {
-        alert('Please enter valid coordinates as "longitude, latitude"');
+        toast.error('Please enter valid coordinates as "longitude, latitude"');
         return;
       }
       
@@ -48,6 +55,37 @@ const OceanPathFinder = () => {
       };
       
       setRoute(newRoute);
+      setIsLoading(true);
+      
+      try {
+        // Call the API to get the path
+        const response = await fetch(`${API_URL}/shortest_ocean_path`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            source: sourceCoords,
+            destination: destCoords,
+            algorithm: 'astar',
+            max_distance: 500
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to fetch path');
+        }
+        
+        const data = await response.json();
+        setPathData(data);
+        toast.success('Path calculated successfully!');
+      } catch (error) {
+        console.error('Error calculating path:', error);
+        toast.error(`Error: ${error.message}`);
+      } finally {
+        setIsLoading(false);
+      }
       
       // Update global state
       setGlobalRoute({
@@ -59,7 +97,7 @@ const OceanPathFinder = () => {
         routeType: routeType
       });
     } catch (error) {
-      alert('Invalid coordinates. Please use format: longitude, latitude');
+      toast.error('Invalid coordinates. Please use format: longitude, latitude');
     }
   };
   
@@ -68,35 +106,94 @@ const OceanPathFinder = () => {
     navigate('/visualization');
   };
   
-  // Common ports for quick selection - same as in RouteVisualization
+  // Common ports for quick selection - ensure [longitude, latitude] format
   const commonPorts = [
-    { name: 'Mumbai to Dublin', source: [72.8777, 18.933], destination: [-6.2603, 53.3498] },
-    { name: 'Shanghai to Rotterdam', source: [121.4737, 31.2304], destination: [4.4777, 51.9244] },
-    { name: 'Tokyo to San Francisco', source: [139.8132, 35.7090], destination: [-122.4194, 37.7749] },
-    { name: 'New York to Los Angeles', source: [-74.0060, 40.7128], destination: [-118.2426, 34.0522] },
-    { name: 'Singapore to Sydney', source: [103.8198, 1.3521], destination: [151.2093, -33.8688] }
+    { 
+      name: 'Singapore to Sydney', 
+      source: [103.8198, 1.3521],  // [longitude, latitude]
+      destination: [151.2093, -33.8688]
+    },
+    { 
+      name: 'Shanghai to Rotterdam', 
+      source: [121.4737, 31.2304],
+      destination: [4.4777, 51.9244]
+    },
+    { 
+      name: 'Tokyo to San Francisco', 
+      source: [139.8132, 35.7090],
+      destination: [-122.4194, 37.7749],
+      maxDistance: 1000  // Pacific routes need larger radius
+    },
+    { 
+      name: 'New York to Los Angeles', 
+      source: [-74.0060, 40.7128],
+      destination: [-118.2426, 34.0522],
+      maxDistance: 800
+    },
+    { 
+      name: 'Mumbai to Dublin', 
+      source: [72.8777, 18.933],  // [lon, lat]
+      destination: [-6.2603, 53.3498]
+    }
   ];
   
   // Handle quick route selection
-  const selectQuickRoute = (selectedRoute) => {
-    const newSourceInput = `${selectedRoute.source[0]}, ${selectedRoute.source[1]}`;
-    const newDestInput = `${selectedRoute.destination[0]}, ${selectedRoute.destination[1]}`;
-    
-    setSourceInput(newSourceInput);
-    setDestInput(newDestInput);
-    setRoute({
-      source: selectedRoute.source,
-      destination: selectedRoute.destination
-    });
-    
-    // Update global state
-    setGlobalRoute({
-      ...globalRoute,
+  const selectQuickRoute = async (selectedRoute) => {
+    const requestData = {
       source: selectedRoute.source,
       destination: selectedRoute.destination,
-      sourceInput: newSourceInput,
-      destInput: newDestInput
-    });
+      vessel: {
+        speed: 25,
+        consumption_rate: 1.2,
+        type: 'container_ship'
+      }
+    };
+    
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch(`${API_URL}/shortest_ocean_path`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Path calculation failed:', errorData);
+        throw new Error(errorData.message || 'Failed to fetch path');
+      }
+      
+      const data = await response.json();
+      if (!data.path_coordinates || data.path_coordinates.length === 0) {
+        throw new Error('No valid path found between these ports');
+      }
+      
+      setPathData(data);
+      toast.success(`Path calculated for ${selectedRoute.name}!`);
+      
+      // Update global state
+      setGlobalRoute({
+        ...globalRoute,
+        source: selectedRoute.source,
+        destination: selectedRoute.destination,
+        sourceInput: `${selectedRoute.source[0]}, ${selectedRoute.source[1]}`,
+        destInput: `${selectedRoute.destination[0]}, ${selectedRoute.destination[1]}`,
+        routeType: routeType
+      });
+    } catch (error) {
+      console.error('Error calculating path:', error);
+      toast.error(`Error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Handler for receiving path data from the debugger
+  const handlePathFromDebugger = (data) => {
+    setPathData(data);
   };
   
   return (
@@ -177,8 +274,9 @@ const OceanPathFinder = () => {
                 <button
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   onClick={handleCoordinateInput}
+                  disabled={isLoading}
                 >
-                  Calculate Route
+                  {isLoading ? 'Calculating...' : 'Calculate Route'}
                 </button>
                 
                 <button
@@ -196,11 +294,27 @@ const OceanPathFinder = () => {
                         key={index}
                         className="w-full py-1 px-3 text-sm border border-gray-300 hover:bg-gray-50 rounded"
                         onClick={() => selectQuickRoute(port)}
+                        disabled={isLoading}
                       >
                         {port.name}
                       </button>
                     ))}
                   </div>
+                </div>
+                
+                <div className="border-t pt-4 mt-4">
+                  <button 
+                    className="text-sm text-blue-600 hover:underline"
+                    onClick={() => setShowDebugger(!showDebugger)}
+                  >
+                    {showDebugger ? 'Hide' : 'Show'} Debug Tools
+                  </button>
+                  
+                  {showDebugger && (
+                    <div className="mt-3">
+                      <PathDebugger onPathReceived={handlePathFromDebugger} />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -222,13 +336,18 @@ const OceanPathFinder = () => {
               </h3>
             </div>
             <div className="p-4" style={{ height: '600px' }}>
-              {!route.source || !route.destination ? (
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <p>Calculating route...</p>
+                </div>
+              ) : !route.source || !route.destination ? (
                 <div className="flex items-center justify-center h-full text-gray-500">
                   <p>Please select a route to calculate</p>
                 </div>
               ) : (
                 <OceanPathMap 
                   route={route}
+                  pathData={pathData}
                   selectedRoute={routeType}
                   onRouteTypeChange={setRouteType}
                 />
