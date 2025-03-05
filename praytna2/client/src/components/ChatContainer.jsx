@@ -4,13 +4,12 @@ import useChatStore from "../store/useChatStore";
 const ChatContainer = () => {
     const { messages, input, setInput, sendMessage, chatLoading, addMessage } = useChatStore();
 
-    // Ensure the welcome message is only added once
+    // Add a welcome message once on mount
     useEffect(() => {
-        const hasWelcomeMessage = messages.some(msg => msg.content === "How can I help you today?");
-        if (!hasWelcomeMessage) {
+        if (messages.length === 0) {
             addMessage({ role: "ai", content: "How can I help you today?" });
         }
-    }, [addMessage]); // Remove messages.length from dependencies
+    }, [messages.length, addMessage]);
 
     // Handle sending message on Enter key
     const handleKeyDown = (e) => {
