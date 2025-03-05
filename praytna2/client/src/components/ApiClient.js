@@ -17,7 +17,7 @@ const API_BASE_URL = 'http://localhost:5000';
 export const fetchRoute = async (routeType, source, destination, options = {}) => {
   // Determine endpoint based on route type
   const endpoint = routeType === 'weather' 
-    ? `${API_BASE_URL}/optimal_ocean_path` 
+    ? `${API_BASE_URL}/shortest_ocean_path` 
     : `${API_BASE_URL}/shortest_ocean_path`;
     
   // Try using demo coordinates if in development and if source or destination is over land

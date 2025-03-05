@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.0.9",
     "axios": "^1.8.1",
+    "framer-motion": "^12.4.10",
     "http-proxy-middleware": "^3.0.3",
     "leaflet": "^1.9.4",
     "lodash": "^4.17.21",
