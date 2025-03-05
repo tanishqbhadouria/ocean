@@ -10,6 +10,8 @@ const useAuthStore = create((set) => ({
         try {
           set({ checkingAuth: true });
           const res = await axiosInstance.get("/auth/ship");
+          console.log(res.data.ship);
+          
           set({ ship: res.data.ship });
         } catch (error) {
           set({ ship: null });
