@@ -7,7 +7,7 @@ export const addRoute = async (req, res) => {
         const { source, destination, currPath, estimatedTime, distance, fuelConsumption } = req.body;
         // console.log(req.body?.currPath);
         const shipId = req.ship._id.toString(); // Get ship ID from request
-
+        const ship = await Ship.findById(shipId);
 
         // First check if route already exists
         const existingRoute = await Routes.findOne({
@@ -34,7 +34,7 @@ export const addRoute = async (req, res) => {
                     coordinates: destination.coordinates
                 },
                 currPath,
-                estimatedTime,
+                estimatedTime : ship.speed ? distance / ship.speed : estimatedTime,
                 distance,
                 fuelConsumption,
                 shipCount: 1
@@ -44,7 +44,6 @@ export const addRoute = async (req, res) => {
         }
 
         // Assign route to ship
-        const ship = await Ship.findById(shipId);
         if (!ship) {
             return res.status(404).json({ message: 'Ship not found' });
         }

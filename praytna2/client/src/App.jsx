@@ -42,6 +42,13 @@ const AppContent = () => {
     checkAuth();
   }, [checkAuth]);
 
+
+  useEffect(() => {
+    if (ship?.assignedRoute) {
+      useRouteStore.setState({ route: ship.assignedRoute });
+    }
+  }, [ship]);
+
   if (checkingAuth) return null;
 
   return (
