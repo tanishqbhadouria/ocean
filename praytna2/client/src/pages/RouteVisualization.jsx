@@ -3,6 +3,8 @@ import GlobeView from '../components/GlobeView.jsx';
 import OceanPathMap from '../components/Map/OceanPathMap.jsx'; 
 import { useNavigate } from 'react-router-dom';
 import { RouteContext } from '../App';
+import PortSearch from '../components/PortSearch';
+import { toast } from 'react-hot-toast';
 
 const RouteVisualization = () => {
   const navigate = useNavigate();
@@ -33,6 +35,39 @@ const RouteVisualization = () => {
     { name: 'Singapore to Sydney', source: [103.8198, 1.3521], destination: [151.2093, -33.8688] }
   ];
   
+  // Add state for ports data and selected ports
+  const [portsData, setPortsData] = useState([]);
+  const [sourcePort, setSourcePort] = useState(null);
+  const [destPort, setDestPort] = useState(null);
+
+  // Load ports on component mount
+  useEffect(() => {
+    fetch('/ports.geojson')
+      .then(response => response.json())
+      .then(data => {
+        setPortsData(data);
+      })
+      .catch(err => {
+        console.error('Error loading ports data:', err);
+        toast.error('Failed to load ports data');
+      });
+  }, []);
+
+  // Handle port selection
+  const handleSourcePortSelect = (selectedPort) => {
+    setSourcePort(selectedPort);
+    setSourceInput(`${selectedPort.properties.PORT_NAME}, ${selectedPort.properties.COUNTRY}`);
+    const coords = selectedPort.geometry.coordinates;
+    setRoute(prev => ({ ...prev, source: coords }));
+  };
+
+  const handleDestPortSelect = (selectedPort) => {
+    setDestPort(selectedPort);
+    setDestInput(`${selectedPort.properties.PORT_NAME}, ${selectedPort.properties.COUNTRY}`);
+    const coords = selectedPort.geometry.coordinates;
+    setRoute(prev => ({ ...prev, destination: coords }));
+  };
+
   // Update global state when local route changes
   useEffect(() => {
     setGlobalRoute({
@@ -44,26 +79,17 @@ const RouteVisualization = () => {
     });
   }, [route, sourceInput, destInput, routeType, setGlobalRoute]);
   
-  // Handle coordinate input
+  // Update handleCoordinateInput to work with ports
   const handleCoordinateInput = () => {
-    try {
-      const sourceCoords = sourceInput.split(',').map(num => parseFloat(num.trim()));
-      const destCoords = destInput.split(',').map(num => parseFloat(num.trim()));
-      
-      if (sourceCoords.length !== 2 || destCoords.length !== 2 ||
-          isNaN(sourceCoords[0]) || isNaN(sourceCoords[1]) ||
-          isNaN(destCoords[0]) || isNaN(destCoords[1])) {
-        alert('Please enter valid coordinates as "longitude, latitude"');
-        return;
-      }
-      
-      setRoute({
-        source: sourceCoords,
-        destination: destCoords
-      });
-    } catch (error) {
-      alert('Invalid coordinates. Please use format: longitude, latitude');
+    if (!sourcePort || !destPort) {
+      toast.error('Please select both source and destination ports');
+      return;
     }
+
+    setRoute({
+      source: sourcePort.geometry.coordinates,
+      destination: destPort.geometry.coordinates
+    });
   };
   
   // Handle quick route selection
@@ -95,30 +121,24 @@ const RouteVisualization = () => {
             <div className="p-4">
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="source" className="block text-sm font-medium text-gray-700 mb-1">
-                    Source (longitude, latitude)
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Source Port
                   </label>
-                  <input
-                    type="text"
-                    id="source"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
-                    placeholder="e.g. 72.8777, 18.933"
-                    value={sourceInput}
-                    onChange={(e) => setSourceInput(e.target.value)}
+                  <PortSearch
+                    ports={portsData.features || []}
+                    onSelect={handleSourcePortSelect}
+                    placeholder="Select source port..."
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="destination" className="block text-sm font-medium text-gray-700 mb-1">
-                    Destination (longitude, latitude)
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Destination Port
                   </label>
-                  <input
-                    type="text"
-                    id="destination"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
-                    placeholder="e.g. -6.2603, 53.3498"
-                    value={destInput}
-                    onChange={(e) => setDestInput(e.target.value)}
+                  <PortSearch
+                    ports={portsData.features || []}
+                    onSelect={handleDestPortSelect}
+                    placeholder="Select destination port..."
                   />
                 </div>
                 
@@ -190,7 +210,6 @@ const RouteVisualization = () => {
         </div>
         
         <div className="md:col-span-3">
-          {/* ...existing visualization container... */}
           <div className="bg-white rounded-lg shadow h-full">
             <div className="bg-gray-100 px-4 py-3 rounded-t-lg border-b">
               <h3 className="text-lg font-medium">

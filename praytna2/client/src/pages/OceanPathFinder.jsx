@@ -4,14 +4,12 @@ import { RouteContext } from '../App';
 import OceanPathMap from '../components/Map/OceanPathMap.jsx';
 import PathDebugger from '../components/Map/PathDebugger.jsx';
 import { toast } from 'react-hot-toast';
-// import portsData from '../public/ports.geojson';
 import PortSearch from '../components/PortSearch';
+import useRouteStore from '../store/useRouteStore.js';
 
 const OceanPathFinder = () => {
   const navigate = useNavigate();
   const { globalRoute, setGlobalRoute } = useContext(RouteContext);
-  const [isLoading, setIsLoading] = useState(false);
-  const [pathData, setPathData] = useState(null);
   const [showDebugger, setShowDebugger] = useState(false);
   const API_URL = 'http://localhost:5000';
   
@@ -21,6 +19,8 @@ const OceanPathFinder = () => {
   const [routeType, setRouteType] = useState(globalRoute.routeType);
   
   const [portsData, setPortsData] = useState([]);
+
+  const { saveRoute, route: savedRoute } = useRouteStore();
 
   // Set up local route object for calculations
   const [route, setRoute] = useState({
@@ -78,61 +78,79 @@ const OceanPathFinder = () => {
     setDestInput(`${selectedPort.properties.PORT_NAME}, ${selectedPort.properties.COUNTRY}`);
   };
 
-  // Handle port selection and route calculation
+  // const { calculateRoute, route: storeRoute, pathData, isLoading, saveRoute, isLoading: isSaving } = useRouteStore();
+
+  // Add loading state
+  const [isCalculating, setIsCalculating] = useState(false);
+  // const { saveRoute, route: storeRoute, pathData: savedPathData } = useRouteStore();
+  const [pathData, setPathData] = useState(null);
+
   const handlePortSelection = async () => {
     if (!sourcePort || !destPort) {
       toast.error('Please select both source and destination ports');
       return;
     }
 
-    const sourceCoords = sourcePort.geometry.coordinates;
-    const destCoords = destPort.geometry.coordinates;
-
-    const newRoute = {
-      source: sourceCoords,
-      destination: destCoords
-    };
-
-    setRoute(newRoute);
-    setIsLoading(true);
+    setIsCalculating(true);
 
     try {
-      const response = await fetch(`${API_URL}/shortest_ocean_path`, {
+      // First calculate the optimal path
+      const pathResponse = await fetch(`${API_URL}/shortest_ocean_path`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          source: sourceCoords,
-          destination: destCoords,
+          source: sourcePort.geometry.coordinates,
+          destination: destPort.geometry.coordinates,
           algorithm: 'astar',
           max_distance: 500
         })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch path');
-      }
+      if (!pathResponse.ok) throw new Error('Failed to calculate path');
+      const calculatedPath = await pathResponse.json();
+      
+      // Update local path data state
+      setPathData(calculatedPath);
 
-      const data = await response.json();
-      setPathData(data);
-      toast.success('Path calculated successfully!');
+      // Update route state with coordinates
+      setRoute({
+        source: sourcePort.geometry.coordinates,
+        destination: destPort.geometry.coordinates
+      });
+      // After successful path calculation, save the route
+      const routeData = await saveRoute({
+        source: {
+          name: sourcePort.properties.PORT_NAME,
+          coordinates: sourcePort.geometry.coordinates
+        },
+        destination: {
+          name: destPort.properties.PORT_NAME,
+          coordinates: destPort.geometry.coordinates
+        },
+        currPath: calculatedPath?.coordinates,
+        estimatedTime: calculatedPath?.estimated_time,
+        distance: calculatedPath?.total_distance,
+        fuelConsumption: calculatedPath?.fuel_consumption
+      });
 
-      // Update global state
+      // Update global state with route info
       setGlobalRoute({
         ...globalRoute,
-        source: sourceCoords,
-        destination: destCoords,
-        sourceInput: `${sourcePort.name}, ${sourcePort.country}`,
-        destInput: `${destPort.name}, ${destPort.country}`,
-        routeType: routeType
+        source: sourcePort.geometry.coordinates,
+        destination: destPort.geometry.coordinates,
+        sourceInput: `${sourcePort.properties.PORT_NAME}, ${sourcePort.properties.COUNTRY}`,
+        destInput: `${destPort.properties.PORT_NAME}, ${destPort.properties.COUNTRY}`,
+        routeType: routeType,
+        assignedRouteId: routeData.routeId
       });
+
+      toast.success('Route calculated and saved successfully!');
+
     } catch (error) {
-      console.error('Error calculating path:', error);
-      toast.error(`Error: ${error.message}`);
+      console.error('Error:', error);
+      toast.error(error.message);
     } finally {
-      setIsLoading(false);
+      setIsCalculating(false);
     }
   };
 
@@ -271,9 +289,9 @@ const OceanPathFinder = () => {
                 <button
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   onClick={handlePortSelection}
-                  disabled={isLoading}
+                  disabled={isCalculating}
                 >
-                  {isLoading ? 'Calculating...' : 'Calculate Route'}
+                  {isCalculating ? 'Calculating...' : 'Calculate Route'}
                 </button>
                 
                 <button
@@ -333,7 +351,7 @@ const OceanPathFinder = () => {
               </h3>
             </div>
             <div className="p-4" style={{ height: '600px' }}>
-              {isLoading ? (
+              {isCalculating ? (
                 <div className="flex items-center justify-center h-full text-gray-500">
                   <p>Calculating route...</p>
                 </div>
@@ -343,7 +361,7 @@ const OceanPathFinder = () => {
                 </div>
               ) : (
                 <OceanPathMap 
-                  route={route}
+                  route={route}  // Changed from storeRoute to route
                   pathData={pathData}
                   selectedRoute={routeType}
                   onRouteTypeChange={setRouteType}

@@ -1,25 +1,6 @@
 import React from "react";
 
 const About = () => {
-  const [input, setInput] = useState("");
-  const [response, setResponse] = useState("");
-
-  const handleGenerate = async () => {
-    if (!input.trim()) return;
-    
-    try {
-      const res = await axios.post("http://localhost:8080/generate", {
-        prompt: input,
-        n_predict: 100
-      });
-
-      setResponse(res.data.output || "No response from AI");
-    } catch (error) {
-      console.error("Error:", error);
-      setResponse("Error fetching response");
-    }
-  };
-
   return (
     <div className="relative bg-white">
       {/* Hero Section */}
