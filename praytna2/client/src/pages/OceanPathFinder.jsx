@@ -48,15 +48,20 @@ const OceanPathFinder = () => {
   useEffect(() => {
     // Fetch ports data when component mounts
     fetch('/ports.geojson')
-        .then(response => response.json())
-        .then(data => {
-            setPortsData(data);
-        })
-        .catch(err => {
-            console.error('Error loading ports data:', err);
-            setError('Failed to load ports data');
-        });
-    }, []);
+      .then(response => response.json())
+      .then(data => {
+        // Filter ports within the specified range
+        const filteredPorts = data.features.filter(port => {
+          const [lon, lat] = port.geometry.coordinates;
+          return lon >= -120 && lon <= 120 && lat >= -60 && lat <= 60;
+        });
+        setPortsData({ ...data, features: filteredPorts });
+      })
+      .catch(err => {
+        console.error('Error loading ports data:', err);
+        setError('Failed to load ports data');
+      });
+  }, []);
 
   // Replace ports state with selected ports
   const [sourcePort, setSourcePort] = useState(null);
