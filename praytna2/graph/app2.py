@@ -3,6 +3,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
+import requests
 import os
 import networkx as nx
 import pickle
@@ -11,11 +12,85 @@ import time
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+weather_cache = {}
 
 # Global variables to store the graph
 graph = None
 graph_stats = None
 graph_file = None
+
+# ---- Open-Meteo Configuration ----
+# Corrected Open-Meteo Configuration
+BASE_URL = "https://marine-api.open-meteo.com/v1/marine"
+VALID_PARAMS = {
+    'hourly': 'wave_height,wind_wave_height,wind_wave_direction,wind_wave_period',
+    'timezone': 'GMT'
+}
+
+def get_marine_weather(lat, lon):
+    """Fetch marine-specific weather data with proper parameters"""
+    print(f"\n=== Fetching marine weather for ({lat:.4f}, {lon:.4f}) ===")
+    
+    try:
+        # Validate coordinates
+        if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+            print(f"!! Invalid coordinates ({lat}, {lon})")
+            return None
+
+        params = {**VALID_PARAMS, 'latitude': lat, 'longitude': lon}
+        print(f"API Request: {BASE_URL}?{'&'.join(f'{k}={v}' for k,v in params.items())}")
+        
+        response = requests.get(BASE_URL, params=params, timeout=10)
+        response.raise_for_status()
+        
+        json_data = response.json()
+        print("API Response Structure:", json_data.keys())  # Debug response format
+        
+        # Extract marine-specific parameters
+        return {
+            'wave_height': json_data['hourly']['wave_height'][0],
+            'wind_wave_height': json_data['hourly']['wind_wave_height'][0],
+            'wind_wave_dir': json_data['hourly']['wind_wave_direction'][0],
+            'wind_wave_period': json_data['hourly']['wind_wave_period'][0]
+        }
+        
+    except requests.exceptions.HTTPError as e:
+        print(f"!! API Error: {e}")
+        print(f"Response Content: {response.text}")
+        return None
+    except Exception as e:
+        print(f"!! Unexpected Error: {str(e)}")
+        return None
+
+# Updated weight calculation using marine parameters
+def calculate_wind_penalty(wind_wave_dir, edge_dir, wind_wave_height):
+    """Calculate navigation penalty based on wave conditions"""
+    direction_diff = abs(wind_wave_dir - edge_dir) % 360
+    direction_factor = cos(radians(min(direction_diff, 360 - direction_diff)))
+    
+    # Combine wave height and direction factors
+    return wind_wave_height * direction_factor
+
+# def update_weather_cache():
+#     """Update cache with coordinate validation"""
+#     print("\n=== Updating Weather Cache ===")
+#     blacklisted_coords = set()
+    
+#     for node in graph.nodes():
+#         coords = graph.nodes[node].get('coordinates')
+#         if not coords:
+#             continue
+            
+#         lon, lat = coords
+#         if (lat, lon) in blacklisted_coords:
+#             continue
+            
+#         weather = get_marine_weather(lat, lon)
+#         if weather:
+#             weather_cache[node] = weather
+#         else:
+#             print(f"Blacklisting problematic coordinates ({lat}, {lon})")
+#             blacklisted_coords.add((lat, lon))
 
 def haversine(coord1, coord2):
     """Calculate distance between two coordinates in km"""
@@ -37,6 +112,9 @@ def haversine(coord1, coord2):
     distance = R * c
 
     return distance
+
+
+
 
 # Add date line crossing connections to the graph
 
@@ -207,21 +285,19 @@ def find_nearest_node(graph, point, max_distance=5000):  # Already high enough a
     
     return nearest_node, min_distance
 
-def find_nearest_water_node(graph, point, max_distance=500):
+def find_nearest_water_node(graph, point, max_distance=2500):  # Increased from 500
     """Find the nearest navigable water node to a given point"""
     nearest_node = None
     min_distance = float('inf')
     candidates = []
+    search_radius = max_distance
     
     lon, lat = point
     lon = ((lon + 180) % 360) - 180  # Normalize longitude
     
+    # First pass - look for nodes within initial search radius
     for node, data in graph.nodes(data=True):
         if 'coordinates' not in data:
-            continue
-            
-        # Skip non-water nodes if we have that information
-        if data.get('is_land', False):
             continue
             
         node_lon, node_lat = data['coordinates']
@@ -230,8 +306,8 @@ def find_nearest_water_node(graph, point, max_distance=500):
         try:
             dist = haversine([lon, lat], [node_lon, node_lat])
             
-            # Store all nodes within reasonable distance
-            if dist <= max_distance:
+            # Store candidates and track closest node
+            if dist <= search_radius:
                 candidates.append((node, dist))
             
             if dist < min_distance:
@@ -242,14 +318,35 @@ def find_nearest_water_node(graph, point, max_distance=500):
             print(f"Error calculating distance for node {node}: {e}")
             continue
     
+    # If no nodes found in initial radius, gradually increase search radius
+    while not candidates and search_radius < 5000:  # Cap at 5000km
+        search_radius += 500
+        print(f"No nodes found within {search_radius-500}km, expanding search to {search_radius}km")
+        
+        for node, data in graph.nodes(data=True):
+            if 'coordinates' not in data:
+                continue
+                
+            node_lon, node_lat = data['coordinates']
+            node_lon = ((node_lon + 180) % 360) - 180
+            
+            try:
+                dist = haversine([lon, lat], [node_lon, node_lat])
+                if dist <= search_radius:
+                    candidates.append((node, dist))
+            except ValueError:
+                continue
+    
     # Sort candidates by distance
     candidates.sort(key=lambda x: x[1])
     
-    # Return None if no suitable node found
-    if not candidates:
+    # If still no candidates, return closest node found (if any)
+    if not candidates and nearest_node:
+        print(f"No nodes found within {search_radius}km, using closest at {min_distance:.2f}km")
+        return nearest_node, min_distance
+    elif not candidates:
         return None, min_distance
         
-    # Return the closest water node
     return candidates[0]
 
 @app.route('/', methods=['GET'])
@@ -307,24 +404,22 @@ def shortest_ocean_path():
         if g is None:
             return jsonify({"error": "Failed to load graph"}), 500
         
-        # Find nearest water nodes instead of just nearest nodes
-        source_node, source_dist = find_nearest_water_node(g, source)
-        dest_node, dest_dist = find_nearest_water_node(g, destination)
+        # Find nearest water nodes with expanded search radius
+        source_node, source_dist = find_nearest_water_node(g, source, max_distance=2500)
+        dest_node, dest_dist = find_nearest_water_node(g, destination, max_distance=2500)
         
-        # Log the found nodes and distances
-        print(f"Source: {source} -> Water Node: {source_node}, Distance: {source_dist:.2f} km")
-        print(f"Destination: {destination} -> Water Node: {dest_node}, Distance: {dest_dist:.2f} km")
+        print(f"Source: {source} -> Node: {source_node}, Distance: {source_dist:.2f} km")
+        print(f"Destination: {destination} -> Node: {dest_node}, Distance: {dest_dist:.2f} km")
         
-        if source_node is None:
+        if source_node is None or dest_node is None:
             return jsonify({
-                "error": f"No suitable water node found near source point. Closest is {source_dist:.2f} km away.",
-                "coordinates": source
-            }), 400
-        
-        if dest_node is None:
-            return jsonify({
-                "error": f"No suitable water node found near destination point. Closest is {dest_dist:.2f} km away.",
-                "coordinates": destination
+                "error": "No suitable route found",
+                "details": {
+                    "source_distance": source_dist if source_dist != float('inf') else None,
+                    "dest_distance": dest_dist if dest_dist != float('inf') else None,
+                    "source_found": source_node is not None,
+                    "dest_found": dest_node is not None
+                }
             }), 400
         
         print(f"Source node: {source_node}, distance: {source_dist:.2f} km")
@@ -413,6 +508,115 @@ def shortest_ocean_path():
     except Exception as e:
         print(f"Error processing request: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/optimal_path', methods=['POST'])
+def optimal_path():
+    print("\n=== New Optimal Path Request ===")
+    start_total = time.time()
+    
+    data = request.get_json()
+    source = data['source']
+    destination = data['destination']
+    
+    print(f"Source: {source}")
+    print(f"Destination: {destination}")
+    
+    # Load graph and find nodes
+    g = load_graph()
+    source_node, _ = find_nearest_water_node(g, source)
+    dest_node, _ = find_nearest_water_node(g, destination)
+    
+    print(f"\nPathfinding Between:")
+    print(f"Start Node: {source_node} ({g.nodes[source_node]['coordinates']})")
+    print(f"End Node: {dest_node} ({g.nodes[dest_node]['coordinates']})")
+    
+    best_path = None
+    best_cost = float('inf')
+    
+    for iteration in range(3):
+        print(f"\n--- Iteration {iteration + 1} ---")
+        path_start = time.time()
+        
+        try:
+            path = nx.astar_path(g, source_node, dest_node, heuristic=haversine, weight='adjusted_weight')
+        except nx.NetworkXNoPath:
+            print("!! No Path Found !!")
+            break
+            
+        current_cost = sum(g[u][v]['adjusted_weight'] for u,v in zip(path[:-1], path[1:]))
+        print(f"Path Cost: {current_cost:.2f} km")
+        print(f"Path Length: {len(path)} nodes")
+        print(f"Calculation Time: {time.time() - path_start:.2f}s")
+        
+        if current_cost < best_cost:
+            best_cost = current_cost
+            best_path = path
+            print("New Best Path!")
+            
+        # Adjust weights based on weather
+        print("\nAdjusting Edge Weights:")
+        for u, v in zip(path[:-1], path[1:]):
+            edge_data = g[u][v]
+            u_coords = g.nodes[u]['coordinates']
+            v_coords = g.nodes[v]['coordinates']
+            
+            # Get midpoint weather
+            mid_lat = (u_coords[1] + v_coords[1]) / 2
+            mid_lon = (u_coords[0] + v_coords[0]) / 2
+            weather = get_marine_weather(mid_lat, mid_lon)
+            
+            if not weather:
+                print(f"Skipping edge {u}-{v} (weather data missing)")
+                continue
+                
+            # Calculate direction penalty
+            edge_dir = calculate_edge_direction(u_coords[0], u_coords[1], v_coords[0], v_coords[1])
+            wind_penalty = weather['wind_speed'] * cos(radians(weather['wind_dir'] - edge_dir))
+            
+            # Update weight
+            original = edge_data['base_weight']
+            new_weight = original * (1 + wind_penalty/20)  # 20 m/s = 40 knots max wind
+            
+            print(f"Edge {u}-{v}:")
+            print(f"Direction: {edge_dir:.1f}° vs Wind: {weather['wind_dir']:.1f}°")
+            print(f"Wind Speed: {weather['wind_speed']} m/s")
+            print(f"Penalty Factor: {wind_penalty:.2f}")
+            print(f"Weight: {original:.2f} → {new_weight:.2f}")
+            
+            g[u][v]['adjusted_weight'] = new_weight
+            
+    print(f"\n=== Final Result ===")
+    print(f"Best Path Cost: {best_cost:.2f} km")
+    print(f"Total Processing Time: {time.time() - start_total:.2f}s")
+    
+    return jsonify({
+        'path': convert_path_to_coordinates(g, best_path),
+        'cost': best_cost,
+        'iterations': iteration + 1
+    })
+
+def calculate_edge_direction(lon1, lat1, lon2, lat2):
+    """Calculate edge direction with wrapping"""
+    delta_lon = lon2 - lon1
+    if abs(delta_lon) > 180:
+        delta_lon = (delta_lon + 360) % 360
+        
+    direction = degrees(atan2(lat2 - lat1, delta_lon))
+    return (direction + 360) % 360
+
+def convert_path_to_coordinates(graph, path):
+    """Convert node path to coordinates"""
+    return [graph.nodes[node]['coordinates'] for node in path]
+
+# ... (keep existing haversine, load_graph, find_nearest_water_node functions) ...
+
+if __name__ == '__main__':
+    print("Loading Ocean Graph...")
+    load_graph()
+    print("Initial Weather Cache Population...")
+    # update_weather_cache()
+    app.run(port=5000)   
+    
 
 def connect_transpacific_points(graph, source_node, dest_node):
     """Add temporary connections for transpacific routes"""
