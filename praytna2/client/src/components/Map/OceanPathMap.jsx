@@ -111,7 +111,7 @@ const OceanPathMap = ({ route = {}, selectedRoute = 'standard', onRouteTypeChang
           }
         };
 
-        console.log('Sending request:', requestData); // Debug log
+        // console.log('Sending request:', requestData); // Debug log
 
         const response = await axios.post(
           'http://localhost:5000/shortest_ocean_path', 

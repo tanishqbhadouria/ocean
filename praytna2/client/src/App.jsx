@@ -12,6 +12,7 @@ import useAuthStore from './store/useAuthStore';
 import Dashboard from './pages/Dashboard';
 import ChatWidget from './components/ChatWidget';
 import ChatContainer from './components/ChatContainer';
+import useRouteStore from './store/useRouteStore';
 
 // Create a context to share route data between components
 export const RouteContext = createContext();
@@ -34,6 +35,7 @@ const AppContent = () => {
   });
 
   const { checkAuth, checkingAuth, ship } = useAuthStore();
+  const { route, routeData } = useRouteStore();
   const location = useLocation(); // Now inside Router, so no error
 
   useEffect(() => {
@@ -50,7 +52,7 @@ const AppContent = () => {
           <Routes>
             <Route path="/visualization" element={ship ? <RouteVisualization /> : <Navigate to="/ship/new" />} />
             <Route path="/pathfinder" element={ship ? <OceanPathFinder /> : <Navigate to="/ship/new" />} />
-            <Route path="/dashboard" element={ship ? <Dashboard ship={ship} /> : <Navigate to="/ship/new" />} />
+            <Route path="/dashboard" element={ship ? <Dashboard ship={ship} route={route}/> : <Navigate to="/ship/new" />} />
             <Route path="/chat" element={ship ? <ChatContainer /> : <Navigate to="/ship/new" />} />
             <Route path="/about" element={<About />} />
             <Route path="/" element={ship ? <OceanPathFinder /> : <Navigate to="/ship/new" />} />
