@@ -3,7 +3,7 @@
  */
 
 // Base URL for API requests - adjust this to match your environment
-const API_BASE_URL = process.env.VITE_GRPAH;
+const API_BASE_URL = "https://ocean-python-api.onrender.com";
 
 /**
  * Make a request to fetch a route

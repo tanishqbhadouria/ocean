@@ -60,7 +60,7 @@ const EnhancedOceanPathMap = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${process.env.VITE_GRAPH}/shortest_ocean_path`, {
+      const response = await fetch(`https://ocean-python-api.onrender.com/shortest_ocean_path`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
