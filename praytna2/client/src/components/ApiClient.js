@@ -3,7 +3,7 @@
  */
 
 // Base URL for API requests - adjust this to match your environment
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = process.env.VITE_GRPAH;
 
 /**
  * Make a request to fetch a route

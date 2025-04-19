@@ -6,7 +6,7 @@ const PathDebugger = ({ onPathReceived }) => {
   const [lastRequest, setLastRequest] = useState(null);
   const [lastResponse, setLastResponse] = useState(null);
   const [showDebug, setShowDebug] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.VITE_GRAPH;
 
   // Test routes that span different regions of the world
   const testRoutes = [

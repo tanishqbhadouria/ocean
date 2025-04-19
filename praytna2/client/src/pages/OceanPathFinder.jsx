@@ -11,7 +11,7 @@ const OceanPathFinder = () => {
   const navigate = useNavigate();
   const { globalRoute, setGlobalRoute } = useContext(RouteContext);
   const [showDebugger, setShowDebugger] = useState(false);
-  const API_URL = 'http://localhost:5000';
+  const API_URL = process.env.graph;
   
   // Initialize local state from global state
   const [sourceInput, setSourceInput] = useState(globalRoute.sourceInput);
