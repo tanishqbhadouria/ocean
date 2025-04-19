@@ -1,0 +1,9 @@
+Flask==2.3.3
+numpy==1.24.3
+haversine==2.8.0
+tqdm==4.65.0
+flask-cors==4.0.0
+pickle-mixin==1.0.2
+python-dotenv==1.0.0
+gunicorn==21.2.0
+Werkzeug==2.3.7
