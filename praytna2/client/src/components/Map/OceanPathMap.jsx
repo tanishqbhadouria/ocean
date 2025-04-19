@@ -114,7 +114,7 @@ const OceanPathMap = ({ route = {}, selectedRoute = 'standard', onRouteTypeChang
         // console.log('Sending request:', requestData); // Debug log
 
         const response = await axios.post(
-          `${process.env.VITE_GRAPH}/shortest_ocean_path`, 
+          `https://ocean-python-api.onrender.com/shortest_ocean_path`, 
           requestData
         );
         
