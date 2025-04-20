@@ -44,7 +44,7 @@ const PortSearch = ({ ports, onSelect, placeholder }) => {
                             className="p-2 hover:bg-gray-100 cursor-pointer"
                             onClick={() => {
                                 onSelect(port);
-                                setSearchTerm('');
+                                setSearchTerm(`${port.properties.PORT_NAME}, ${port.properties.COUNTRY}`); // Update input field
                                 setFilteredPorts([]);
                             }}
                         >
