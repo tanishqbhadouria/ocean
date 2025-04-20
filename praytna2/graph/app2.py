@@ -104,7 +104,7 @@ def haversine(coord1, coord2):
 
     # Differences in coordinates
     dlat = lat2 - lat1
-    dlon = lon2 - lon1
+    dlon = dlon - lon1
 
     # Haversine formula
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
@@ -654,6 +654,8 @@ def connect_transpacific_points(graph, source_node, dest_node):
 
 if __name__ == "__main__":
     # Load graph on startup
+    print("Loading Ocean Graph...")
     load_graph()
     # Run the Flask app
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get("PORT", 5000))  # Use the PORT environment variable
+    app.run(host="0.0.0.0", port=port)  # Disable debug mode for production
