@@ -610,14 +610,6 @@ def convert_path_to_coordinates(graph, path):
 
 # ... (keep existing haversine, load_graph, find_nearest_water_node functions) ...
 
-if __name__ == '__main__':
-    print("Loading Ocean Graph...")
-    load_graph()
-    print("Initial Weather Cache Population...")
-    # update_weather_cache()
-    app.run(port=5000)   
-    
-
 def connect_transpacific_points(graph, source_node, dest_node):
     """Add temporary connections for transpacific routes"""
     source_coords = graph.nodes[source_node]['coordinates']
@@ -657,5 +649,5 @@ if __name__ == "__main__":
     print("Loading Ocean Graph...")
     load_graph()
     # Run the Flask app
-    port = int(os.environ.get("PORT", 5000))  # Use the PORT environment variable
-    app.run(host="0.0.0.0", port=port)  # Disable debug mode for production
+    port = int(os.environ.get("PORT", 5000))  # Render sets this env variable
+    app.run(host="0.0.0.0", port=port)        # Bind to all interfaces
