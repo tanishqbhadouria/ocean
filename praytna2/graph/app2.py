@@ -104,7 +104,7 @@ def haversine(coord1, coord2):
 
     # Differences in coordinates
     dlat = lat2 - lat1
-    dlon = dlon - lon1
+    dlon = lon2 - lon1  # Corrected this line
 
     # Haversine formula
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
