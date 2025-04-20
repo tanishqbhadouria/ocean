@@ -11,7 +11,7 @@ const OceanPathFinder = () => {
   const navigate = useNavigate();
   const { globalRoute, setGlobalRoute } = useContext(RouteContext);
   const [showDebugger, setShowDebugger] = useState(false);
-  const API_URL = process.env.graph;
+  const API_URL = "https://ocean-python-api.onrender.com";
   
   // Initialize local state from global state
   const [sourceInput, setSourceInput] = useState(globalRoute.sourceInput);
@@ -70,12 +70,24 @@ const OceanPathFinder = () => {
   // Replace undefined setSource/setDestination with proper handlers
   const handleSourcePortSelect = (selectedPort) => {
     setSourcePort(selectedPort);
-    setSourceInput(`${selectedPort.properties.PORT_NAME}, ${selectedPort.properties.COUNTRY}`);
+    const sourceInputValue = `${selectedPort.properties.PORT_NAME}, ${selectedPort.properties.COUNTRY}`;
+    setSourceInput(sourceInputValue); // Update the input field
+    setGlobalRoute((prev) => ({
+      ...prev,
+      sourceInput: sourceInputValue,
+      source: selectedPort.geometry.coordinates
+    }));
   };
 
   const handleDestPortSelect = (selectedPort) => {
     setDestPort(selectedPort);
-    setDestInput(`${selectedPort.properties.PORT_NAME}, ${selectedPort.properties.COUNTRY}`);
+    const destInputValue = `${selectedPort.properties.PORT_NAME}, ${selectedPort.properties.COUNTRY}`;
+    setDestInput(destInputValue); // Update the input field
+    setGlobalRoute((prev) => ({
+      ...prev,
+      destInput: destInputValue,
+      destination: selectedPort.geometry.coordinates
+    }));
   };
 
   // const { calculateRoute, route: storeRoute, pathData, isLoading, saveRoute, isLoading: isSaving } = useRouteStore();
